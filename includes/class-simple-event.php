@@ -109,6 +109,16 @@ class Simple_Event {
 	}
 
 	/**
+	 * Flush rewrite rules
+	 *
+	 * @since 0.0.1
+	 */
+	public static function flush_rewrite_rules() {
+		global $wp_rewrite;
+		if ( $wp_rewrite ) $wp_rewrite->flush_rules();
+	}
+
+	/**
 	 * @since 0.0.1
 	 *
 	 * @return object 
@@ -138,8 +148,7 @@ class Simple_Event {
 	}
 
 	/**
-	 *
-	 *
+	 * 
 	 * 
 	 * @since 0.0.1
 	 */
@@ -153,7 +162,7 @@ class Simple_Event {
 	 * @since 0.0.1
 	 */
 	public static function activate_plugin() {
-
+		static::flush_rewrite_rules();
 	}
 
 	/**
