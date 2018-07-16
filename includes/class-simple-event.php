@@ -62,7 +62,7 @@ class Simple_Event {
 	            'show_in_quick_edit' => true,
 	            'show_admin_column'  => true,
 	            'hierarchical'       => true,
-	            'query_var'          => 'events-category',
+	            'query_var'          => 'events_category',
 				'rewrite' => [
 					'hierarchical' => true,
 					'slug' => 'events-category',
@@ -91,7 +91,7 @@ class Simple_Event {
                 'menu_name' => __( 'Tags' )
             ],	    		
 		 	'hierarchical' => false,
-			'query_var' => 'events-tag',
+			'query_var' => 'events_tag',
 			'rewrite' => [
 				'hierarchical' => true,
 				'slug' => 'events-tag',
