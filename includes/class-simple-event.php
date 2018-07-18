@@ -127,7 +127,7 @@ class Simple_Event {
                 <label for="event_date">Date</label><p class="description"></p>
             </div>
             <div class="input" style="float: left; width: 75%; vertical-align: top">
-                <input name="event_date" id="event_date" placeholder="" readonly autocomplete="off" value="<?=$date?>" class="large-text" type="text"><p class="description">Define the event date by selecting it from the jQuery DatePicker popup</p>
+                <input name="event_date" id="event_date" placeholder="" readonly autocomplete="off" value="<?=esc_attr($date)?>" class="large-text" type="text"><p class="description">Define the event date by selecting it from the jQuery DatePicker popup</p>
             </div>
         </div>
         <div class="field wrapper" style="margin-bottom: 12px; overflow: auto;">
@@ -160,7 +160,7 @@ class Simple_Event {
 			      </div>
 			      <div id="pac-container">
 			      	<input type="hidden" name="event_location_latitude_longitude" value="<?=$cord?$cord:'-7.7974565,110.37069700000006'?>">
-			        <input id="pac-input" name="event_location_address" type="text" placeholder="Enter a location" value="<?=$addr?$addr:'Yogyakarta City, Special Region of Yogyakarta, Indonesia'?>">
+			        <input id="pac-input" name="event_location_address" type="text" placeholder="Enter a location" value="<?=$addr?esc_attr($addr):'Yogyakarta City, Special Region of Yogyakarta, Indonesia'?>">
 			      </div>
 			    </div>
 			    <div id="map"></div>
@@ -177,7 +177,7 @@ class Simple_Event {
                 <label for="event_url">URL</label><p class="description"></p>
             </div>
             <div class="input" style="float: left; width: 75%; vertical-align: top">
-                <input name="event_url" id="event_url" placeholder="" value="<?=$url?>" class="large-text" type="url"><p class="description">Please make sure you fill the url starting with http:// or https:// </p>
+                <input name="event_url" id="event_url" placeholder="" value="<?=esc_url($url)?>" class="large-text" type="url"><p class="description">Please make sure you fill the url starting with http:// or https:// </p>
             </div>
         </div>                
 	<?php        
@@ -450,7 +450,7 @@ class Simple_Event {
 	        });
 
 	        marker.setPosition({lat: parseFloat(eventLocation[0]), lng: parseFloat(eventLocation[1])});
-	        
+
 	        autocomplete.addListener('place_changed', function() {
 	          infowindow.close();
 	          marker.setVisible(false);
@@ -523,7 +523,6 @@ class Simple_Event {
 		  ( function($) {
 		  	$(window).load(function() {
 				$( "#event_date" ).datepicker();
-				initMap();
 		  	});		    
 		  } )(jQuery);
 		</script>
