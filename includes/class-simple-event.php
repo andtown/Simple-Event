@@ -254,7 +254,7 @@ class Simple_Event {
 	public function wp_admin_init() {
 
 		global $pagenow, $hook_suffix, $typenow, $post;
-		
+
 		if ( isset( $_GET['post'] ) )
 		 	$post_id = (int) $_GET['post'];
 		elseif ( isset( $_POST['post_ID'] ) )
@@ -457,10 +457,15 @@ class Simple_Event {
 	        infowindow.setContent(infowindowContent);
 	        var marker = new google.maps.Marker({
 	          map: map,
-	          anchorPoint: new google.maps.Point(0, -29)
+	          anchorPoint: new google.maps.Point(0, -29),
+	          draggable:true
 	        });
 
 	        marker.setPosition({lat: parseFloat(eventLocation[0]), lng: parseFloat(eventLocation[1])});
+
+		    google.maps.event.addListener(marker, "position_changed", function() {
+		      document.getElementsByName('event_location_latitude_longitude')[0].value = marker.getPosition().lat().toString()+','+marker.getPosition().lng().toString();
+		    });	        
 
 	        autocomplete.addListener('place_changed', function() {
 	          infowindow.close();
