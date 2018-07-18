@@ -545,7 +545,7 @@ class Simple_Event {
 	 * @since 0.0.1
 	 */
 	public static function deactivate_plugin() {
-
+		static::flush_rewrite_rules();
 	}
 
 }
