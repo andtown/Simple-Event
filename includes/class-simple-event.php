@@ -19,7 +19,7 @@ class Simple_Event {
 	 *
 	 * @since 0.0.1
 	 */
-	private function create_event_post_type() {
+	public static function create_event_post_type() {
 	    register_post_type('event', 
 	        array(
 	        'labels' => array(
@@ -241,7 +241,8 @@ class Simple_Event {
 	 * @since 0.0.1
 	 */
 	public function wp_init() {
-		$this->create_event_post_type();		
+		if ( !post_type_exists('event') ) 
+			static::create_event_post_type();			
 	}
 
 	/**
@@ -533,6 +534,8 @@ class Simple_Event {
 	 * @since 0.0.1
 	 */
 	public static function activate_plugin() {
+		if ( !post_type_exists('event') ) 
+			static::create_event_post_type();				
 		static::flush_rewrite_rules();
 	}
 
