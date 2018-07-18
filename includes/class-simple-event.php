@@ -221,6 +221,7 @@ class Simple_Event {
 		$this->init();
 		add_action('init', [$this, 'wp_init'] );
 		add_action('admin_init', [$this, 'wp_admin_init']);
+		add_action('template_include', array($this, 'template_include'));
 
 	}
 
@@ -253,6 +254,7 @@ class Simple_Event {
 	public function wp_admin_init() {
 
 		global $pagenow, $hook_suffix, $typenow, $post;
+		
 		if ( isset( $_GET['post'] ) )
 		 	$post_id = (int) $_GET['post'];
 		elseif ( isset( $_POST['post_ID'] ) )
@@ -286,6 +288,16 @@ class Simple_Event {
 		if ( empty($loc) ) $loc = '-7.7974565, 110.37069700000006';
 		wp_localize_script('google-maps-js','eventLocation',explode(',', $loc));		
 	}
+
+	/**
+	 * 
+	 * 
+	 * @since 0.0.1
+	 */
+    public function template_include( $tmpl ) {
+    	//TODO: provide plugin archive and its single template so it can be used to override the use of default theme templates
+    	return $tmpl;
+    }
 
 	/**
 	 * 
