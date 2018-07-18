@@ -198,8 +198,6 @@ class Simple_Event {
 	 * @since 0.0.1
 	 */
 	public static function flush_rewrite_rules() {
-		//global $wp_rewrite;
-		//if ( $wp_rewrite ) $wp_rewrite->flush_rules();
 		flush_rewrite_rules();
 	}
 

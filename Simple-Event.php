@@ -5,7 +5,7 @@
 * Version: 0.0.1
 * Author: Andtown
 * Author URI: 
-* Description: 
+* Description: This plugin is a simple event plugin that uses custom post type to store events
 * License: MIT
 */
 
