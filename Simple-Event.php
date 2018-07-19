@@ -14,6 +14,8 @@ if ( ! defined( 'WPINC' ) ) {
     die;
 }
 
+defined('SIMPLE_EVENT_PLUGIN_PATH') || define( 'SIMPLE_EVENT_PLUGIN_PATH', plugin_dir_path( __FILE__ ) );
+
 register_activation_hook( __FILE__, array('Simple_Event','activate_plugin') );
 register_deactivation_hook( __FILE__, array('Simple_Event','deactivate_plugin') );
 

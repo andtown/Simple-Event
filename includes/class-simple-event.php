@@ -261,7 +261,7 @@ class Simple_Event {
 		 	$post_id = (int) $_POST['post_ID'];
 		else
 		 	$post_id = 0;		
-		if ( !($typenow == 'event' && $pagenow != 'edit.php' || ($pagenow == 'post.php' && $post_id > 0 && ($post = get_post($post_id)) && $post->post_type == 'event') ) ) return;
+		if ( !( 'event' == $typenow && 'edit.php' != $pagenow || ( 'post.php' == $pagenow && $post_id > 0 && ($post = get_post($post_id)) && 'event' == $post->post_type ) ) ) return;
 
 
 	    add_action( 'add_meta_boxes', array($this,'create_the_metabox') );
@@ -290,12 +290,22 @@ class Simple_Event {
 	}
 
 	/**
-	 * 
+	 * Provide plugin archive and its single template so it can be used to override the use of default theme templates
 	 * 
 	 * @since 0.0.1
 	 */
     public function template_include( $tmpl ) {
-    	//TODO: provide plugin archive and its single template so it can be used to override the use of default theme templates
+		/**
+		 * @since 0.1.0
+		 */	
+		 global $post;
+		 if ( $post instanceof WP_POST && 'event' == $post->post_type ) {
+		 	$tmpl = '';
+		 	if ( is_archive() ) $tmpl = 'archive.php';
+		 	if ( is_single() ) $tmpl = 'single.php';	 	
+		 	if ( !empty($tmpl) && file_exists(SIMPLE_EVENT_PLUGIN_PATH . 'public/templates/' . $tmpl) ) 
+		 		$tmpl = SIMPLE_EVENT_PLUGIN_PATH . 'public/templates/' . $tmpl;
+		 }  	
     	return $tmpl;
     }
 
