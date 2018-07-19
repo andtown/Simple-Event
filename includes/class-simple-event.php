@@ -220,8 +220,8 @@ class Simple_Event {
 
 		$this->init();
 		add_action('init', [$this, 'wp_init'] );
+		add_action('wp', [$this,'wp']);
 		add_action('admin_init', [$this, 'wp_admin_init']);
-		add_action('template_include', array($this, 'template_include'));
 
 	}
 
@@ -244,6 +244,21 @@ class Simple_Event {
 	public function wp_init() {
 		if ( !post_type_exists('event') ) 
 			static::create_event_post_type();			
+	}
+
+	/**
+	 * 
+	 * 
+	 * @since 0.1.0
+	 */
+	public function wp() {
+
+		global $post;
+
+		if ( !($post instanceof WP_POST && 'event' == $post->post_type) ) return;
+
+		add_action('template_include', array($this, 'template_include'));
+		
 	}
 
 	/**
@@ -298,17 +313,49 @@ class Simple_Event {
 		/**
 		 * @since 0.1.0
 		 */	
-		 global $post;
-		 if ( $post instanceof WP_POST && 'event' == $post->post_type ) {
-		 	$tmpl = '';
-		 	if ( is_archive() ) $tmpl = 'archive.php';
-		 	if ( is_single() ) $tmpl = 'single.php';	 	
-		 	if ( !empty($tmpl) && file_exists(SIMPLE_EVENT_PLUGIN_PATH . 'public/templates/' . $tmpl) ) 
-		 		$tmpl = SIMPLE_EVENT_PLUGIN_PATH . 'public/templates/' . $tmpl;
-		 }  	
+			
+		if ( (is_archive() && ($tmpl = STYLESHEETPATH . '/Simple-Event/archive.php') && file_exists($tmpl)) ||
+				(is_single() && ($tmpl = STYLESHEETPATH . '/Simple-Event/single.php') && file_exists($tmpl))
+		 ) return $tmpl;
+
+	 	add_action( 'wp_enqueue_scripts', array($this, 'global_template_scripts') );
+
+	 	if ( is_archive() && ($tmpl = SIMPLE_EVENT_PLUGIN_PATH . 'public/templates/archive.php') && file_exists($tmpl) ) { 
+	 		add_action( 'wp_enqueue_scripts', array($this, 'archive_template_scripts') );
+	 	} elseif ( is_single() && ($tmpl = SIMPLE_EVENT_PLUGIN_PATH . 'public/templates/single.php') && file_exists($tmpl) ) { 
+			add_action( 'wp_enqueue_scripts', array($this, 'single_template_scripts') );	 		
+	 	} 		
+
     	return $tmpl;
     }
 
+	/**
+	 * 
+	 * 
+	 * @since 0.1.0
+	 */
+    public function global_template_scripts() {
+			
+    }
+
+	/**
+	 * 
+	 * 
+	 * @since 0.1.0
+	 */
+    public function archive_template_scripts() {
+			
+    }
+
+	/**
+	 * 
+	 * 
+	 * @since 0.1.0
+	 */
+    public function single_template_scripts() {
+			
+    }
+           
 	/**
 	 * 
 	 * 
