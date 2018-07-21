@@ -117,8 +117,7 @@ class Simple_Event {
 	public function events_meta_box_description_callback() {
 		global $post;
 		$cord = get_post_meta($post->ID,'event_location_latitude_longitude',true);
-		$date = get_post_meta($post->ID,'event_date',true);
-		$int_datetime = get_post_meta($post->ID,'event_date_time',true);
+		$int_datetime = strtotime(get_post_meta($post->ID,'event_date_time',true));
 		$url = get_post_meta($post->ID,'event_url',true);
 		$addr = get_post_meta($post->ID,'event_location_address',true);
 		wp_nonce_field( 'simple_event_nonce', 'simple_event_nonce' );
@@ -129,7 +128,7 @@ class Simple_Event {
             </div>
             <div class="input" style="float: left; width: 75%; vertical-align: top">
             	<input type="hidden" id="event_date_time" name="event_date_time" value="<?=esc_attr($int_datetime)?>">
-                <input name="event_date" id="event_date" placeholder="" readonly autocomplete="off" value="<?=esc_attr($date)?>" class="large-text" type="text"><p class="description">Define the event date by selecting it from the jQuery DatePicker popup</p>
+                <input id="event_date" placeholder="" readonly autocomplete="off" value="" class="large-text" type="text"><p class="description">Define the event date by selecting it from the jQuery DatePicker popup</p>
             </div>
         </div>
         <div class="field wrapper" style="margin-bottom: 12px; overflow: auto;">
@@ -373,8 +372,7 @@ class Simple_Event {
 
         update_post_meta( $post_id, 'event_location_latitude_longitude', $event_post['event_location_latitude_longitude'] );
         update_post_meta( $post_id, 'event_location_address', $event_post['event_location_address'] );
-   		update_post_meta( $post_id, 'event_date_time', $event_post['event_date_time'] );
-        update_post_meta( $post_id, 'event_date', $event_post['event_date'] );
+   		update_post_meta( $post_id, 'event_date_time', date('Y-m-d', (int) $event_post['event_date_time'] ) );
         update_post_meta( $post_id, 'event_url', $event_post['event_url'] );
     }
 
@@ -388,7 +386,6 @@ class Simple_Event {
             delete_post_meta( $post->ID, 'event_location_latitude_longitude');    
             delete_post_meta( $post->ID, 'event_location_address');  
             delete_post_meta( $post->ID, 'event_date_time');
-            delete_post_meta( $post->ID, 'event_date');       
             delete_post_meta( $post->ID, 'event_url');                  
         }
         return $chk; // go with deletion
@@ -594,18 +591,32 @@ class Simple_Event {
 	 * 
 	 * @since 0.0.1
 	 */
-	public function admin_footer_js( ) {
+	public function admin_footer_js() {
 	?>
 		<script type="text/javascript">
 		  ( function($) {
+		    Date.prototype.toMySQLFormat = function() {
+		        var year, month, day;
+		        year = String(this.getFullYear());
+		        month = String(this.getMonth() + 1);
+		        if (month.length == 1) {
+		            month = "0" + month;
+		        }
+		        day = String(this.getDate());
+		        if (day.length == 1) {
+		            day = "0" + day;
+		        }
+		        return year + "-" + month + "-" + day;
+		    };
+		    Date.prototype.getUnixTime = function() { return (this.getTime()/1000)+86400|0 };  	
 		  	$(window).load(function() {
 				$( "#event_date" ).datepicker(
-					{
+					{	
 						onSelect: function( dateText, inst) {							
-							$('#event_date_time').val($(this).datepicker('getDate').getTime());
+							$('#event_date_time').val($(this).datepicker('getDate').getUnixTime());
 						}
 					}
-				);
+				).datepicker( "setDate", new Date(parseInt($('#event_date_time').val())*1000) );
 		  	});		    
 		  } )(jQuery);
 		</script>
