@@ -45,6 +45,7 @@ class Simple_Event {
 	        'rewrite' => true,
 	        'supports' => array(
 	        	'title',
+	        	'editor',
 	            'thumbnail'
 	        ),
 	        'can_export' => true,
@@ -117,7 +118,7 @@ class Simple_Event {
 	public function events_meta_box_description_callback() {
 		global $post;
 		$cord = get_post_meta($post->ID,'event_location_latitude_longitude',true);
-		$date = get_post_meta($post->ID,'event_date',true);
+		$int_datetime = strtotime(get_post_meta($post->ID,'event_date_time',true));
 		$url = get_post_meta($post->ID,'event_url',true);
 		$addr = get_post_meta($post->ID,'event_location_address',true);
 		wp_nonce_field( 'simple_event_nonce', 'simple_event_nonce' );
@@ -127,7 +128,8 @@ class Simple_Event {
                 <label for="event_date">Date</label><p class="description"></p>
             </div>
             <div class="input" style="float: left; width: 75%; vertical-align: top">
-                <input name="event_date" id="event_date" placeholder="" readonly autocomplete="off" value="<?=esc_attr($date)?>" class="large-text" type="text"><p class="description">Define the event date by selecting it from the jQuery DatePicker popup</p>
+            	<input type="hidden" id="event_date_time" name="event_date_time" value="<?=esc_attr($int_datetime)?>">
+                <input id="event_date" placeholder="" readonly autocomplete="off" value="" class="large-text" type="text"><p class="description">Define the event date by selecting it from the jQuery DatePicker popup</p>
             </div>
         </div>
         <div class="field wrapper" style="margin-bottom: 12px; overflow: auto;">
@@ -166,8 +168,8 @@ class Simple_Event {
 			    <div id="map"></div>
 			    <div id="infowindow-content">
 			      <img src="" width="16" height="16" id="place-icon">
-			      <span id="place-name"  class="title"></span><br>
-			      <span id="place-address"></span>
+			      <span id="place-name"  class="title"><?=preg_replace('/^(.+?),.+/i','$1',$addr)?></span><br>
+			      <span id="place-address"><?=preg_replace('/^(.+?),(.+)$/i','$2',$addr)?></span>
 			    </div>
 			    <p class="description">This field is integrated with Google places autocomplete and also the map </p>
 			</div>
@@ -220,8 +222,9 @@ class Simple_Event {
 
 		$this->init();
 		add_action('init', [$this, 'wp_init'] );
+		add_action('wp', [$this,'wp']);
 		add_action('admin_init', [$this, 'wp_admin_init']);
-		add_action('template_include', array($this, 'template_include'));
+		add_filter('request', [$this, 'request']);
 
 	}
 
@@ -249,6 +252,21 @@ class Simple_Event {
 	/**
 	 * 
 	 * 
+	 * @since 0.1.0
+	 */
+	public function wp() {
+
+		global $post;
+
+		if ( !($post instanceof WP_POST && 'event' == $post->post_type) ) return;
+
+		add_action('template_include', array($this, 'template_include'));
+		
+	}
+
+	/**
+	 * 
+	 * 
 	 * @since 0.0.1
 	 */
 	public function wp_admin_init() {
@@ -261,7 +279,7 @@ class Simple_Event {
 		 	$post_id = (int) $_POST['post_ID'];
 		else
 		 	$post_id = 0;		
-		if ( !($typenow == 'event' && $pagenow != 'edit.php' || ($pagenow == 'post.php' && $post_id > 0 && ($post = get_post($post_id)) && $post->post_type == 'event') ) ) return;
+		if ( !( 'event' == $typenow && 'edit.php' != $pagenow || ( 'post.php' == $pagenow && $post_id > 0 && ($post = get_post($post_id)) && 'event' == $post->post_type ) ) ) return;
 
 
 	    add_action( 'add_meta_boxes', array($this,'create_the_metabox') );
@@ -272,6 +290,35 @@ class Simple_Event {
 
         add_action('save_post', array($this,'save_event')); 
         add_filter('pre_delete_post',array($this,'pre_delete_event'), 99, 3);	    
+	}
+
+	/**
+	 * 
+	 * 
+	 * @since 0.1.0
+	 */
+	public function request( $query_vars ) {
+
+		if ( !(isset($query_vars['post_type']) && 'event' == $query_vars['post_type']) ) return;
+
+		$query_vars = wp_parse_args($query_vars, [
+			'meta_key' => 'event_date_time',
+			'orderby' => 'meta_value',
+			'meta_type' => 'DATETIME',
+			'order' => 'ASC',
+			/*
+			'meta_query' => [
+				[
+					'key' => 'event_date_time',
+					'value' => date("Y-m-d"),
+					'compare' => '>='
+				]
+			],
+			*/
+			'paged' => 1
+		]);
+
+		return $query_vars;
 	}
 
 	/**
@@ -290,15 +337,62 @@ class Simple_Event {
 	}
 
 	/**
-	 * 
+	 * Provide plugin archive and its single template so it can be used to override the use of default theme templates
 	 * 
 	 * @since 0.0.1
 	 */
     public function template_include( $tmpl ) {
-    	//TODO: provide plugin archive and its single template so it can be used to override the use of default theme templates
+		/**
+		 * @since 0.1.0
+		 */	
+			
+		if ( (is_archive() && ($tmpl = STYLESHEETPATH . '/Simple-Event/archive.php') && file_exists($tmpl)) ||
+				(is_single() && ($tmpl = STYLESHEETPATH . '/Simple-Event/single.php') && file_exists($tmpl))
+		 ) return $tmpl;
+
+	 	add_action( 'wp_enqueue_scripts', array($this, 'global_template_scripts') );
+
+	 	if ( is_archive() && ($tmpl = SIMPLE_EVENT_PLUGIN_PATH . 'public/templates/archive.php') && file_exists($tmpl) ) { 
+	 		add_action( 'wp_enqueue_scripts', array($this, 'archive_template_scripts') );
+	 	} elseif ( is_single() && ($tmpl = SIMPLE_EVENT_PLUGIN_PATH . 'public/templates/single.php') && file_exists($tmpl) ) { 
+			add_action( 'wp_enqueue_scripts', array($this, 'single_template_scripts') );
+			add_action( 'wp_print_scripts', array($this, 'admin_header_js') );	 	
+	    	add_action( 'wp_print_styles', array($this, 'google_location_style') );				
+	 	} 		
+
     	return $tmpl;
     }
 
+	/**
+	 * 
+	 * 
+	 * @since 0.1.0
+	 */
+    public function global_template_scripts() {
+			
+    }
+
+	/**
+	 * 
+	 * 
+	 * @since 0.1.0
+	 */
+    public function archive_template_scripts() {
+			
+    }
+
+	/**
+	 * 
+	 * 
+	 * @since 0.1.0
+	 */
+    public function single_template_scripts() {
+		wp_enqueue_script('google-maps-js', '//maps.googleapis.com/maps/api/js?key=AIzaSyDPv3PPTE1PHXMmPejCmiPSIAVCGaJqlIE&libraries=places&callback=initMap', [], null, true);
+		$loc = get_post_meta(get_the_id(),'event_location_latitude_longitude',true);
+		if ( empty($loc) ) $loc = '-7.7974565, 110.37069700000006';
+		wp_localize_script('google-maps-js','eventLocation',explode(',', $loc));		
+    }
+           
 	/**
 	 * 
 	 * 
@@ -314,7 +408,7 @@ class Simple_Event {
 
         update_post_meta( $post_id, 'event_location_latitude_longitude', $event_post['event_location_latitude_longitude'] );
         update_post_meta( $post_id, 'event_location_address', $event_post['event_location_address'] );
-        update_post_meta( $post_id, 'event_date', $event_post['event_date'] );
+   		update_post_meta( $post_id, 'event_date_time', date('Y-m-d', (int) $event_post['event_date_time'] ) );
         update_post_meta( $post_id, 'event_url', $event_post['event_url'] );
     }
 
@@ -327,7 +421,7 @@ class Simple_Event {
         if ( 'event' == $post->post_type ) {
             delete_post_meta( $post->ID, 'event_location_latitude_longitude');    
             delete_post_meta( $post->ID, 'event_location_address');  
-            delete_post_meta( $post->ID, 'event_date');       
+            delete_post_meta( $post->ID, 'event_date_time');
             delete_post_meta( $post->ID, 'event_url');                  
         }
         return $chk; // go with deletion
@@ -462,16 +556,19 @@ class Simple_Event {
 	        });
 
 	        marker.setPosition({lat: parseFloat(eventLocation[0]), lng: parseFloat(eventLocation[1])});
+	        infowindow.open(map,marker);
 
 		    google.maps.event.addListener(marker, "position_changed", function() {
-		      document.getElementsByName('event_location_latitude_longitude')[0].value = marker.getPosition().lat().toString()+','+marker.getPosition().lng().toString();
+		    	if ( document.getElementsByName('event_location_latitude_longitude')[0] )
+		      		document.getElementsByName('event_location_latitude_longitude')[0].value = marker.getPosition().lat().toString()+','+marker.getPosition().lng().toString();
 		    });	        
 
 	        autocomplete.addListener('place_changed', function() {
 	          infowindow.close();
 	          marker.setVisible(false);
 	          var place = autocomplete.getPlace();
-	          document.getElementsByName('event_location_latitude_longitude')[0].value = place.geometry.location.lat().toString()+','+place.geometry.location.lng().toString();
+	          if ( document.getElementsByName('event_location_latitude_longitude')[0] )
+	          	document.getElementsByName('event_location_latitude_longitude')[0].value = place.geometry.location.lat().toString()+','+place.geometry.location.lng().toString();
 	          if (!place.geometry) {
 	            // User entered the name of a Place that was not suggested and
 	            // pressed the Enter key, or the Place Details request failed.
@@ -533,17 +630,53 @@ class Simple_Event {
 	 * 
 	 * @since 0.0.1
 	 */
-	public function admin_footer_js( ) {
+	public function admin_footer_js() {
 	?>
 		<script type="text/javascript">
 		  ( function($) {
+		    Date.prototype.toMySQLFormat = function() {
+		        var year, month, day;
+		        year = String(this.getFullYear());
+		        month = String(this.getMonth() + 1);
+		        if (month.length == 1) {
+		            month = "0" + month;
+		        }
+		        day = String(this.getDate());
+		        if (day.length == 1) {
+		            day = "0" + day;
+		        }
+		        return year + "-" + month + "-" + day;
+		    };
+		    Date.prototype.getUnixTime = function() { return (this.getTime()/1000)+86400|0 };  	
 		  	$(window).load(function() {
-				$( "#event_date" ).datepicker();
+				$( "#event_date" ).datepicker(
+					{	
+						onSelect: function( dateText, inst) {							
+							$('#event_date_time').val($(this).datepicker('getDate').getUnixTime());
+						}
+					}
+				).datepicker( "setDate", new Date(parseInt($('#event_date_time').val())*1000) );
 		  	});		    
 		  } )(jQuery);
 		</script>
 	<?php
 	}	
+
+    /**
+     *
+     *
+     * @since 0.1.0
+     */
+    public function archive_pagination() {
+	    global $wp_query;
+	    $big = 999999999;
+	    echo paginate_links(array(
+	        'base' => str_replace($big, '%#%', get_pagenum_link($big)),
+	        'format' => '?paged=%#%',
+	        'current' => max(1, get_query_var('paged')),
+	        'total' => $wp_query->max_num_pages
+	    ));
+    } 	
 
 	/**
 	 * 
