@@ -118,6 +118,7 @@ class Simple_Event {
 		global $post;
 		$cord = get_post_meta($post->ID,'event_location_latitude_longitude',true);
 		$date = get_post_meta($post->ID,'event_date',true);
+		$int_datetime = get_post_meta($post->ID,'event_date_time',true);
 		$url = get_post_meta($post->ID,'event_url',true);
 		$addr = get_post_meta($post->ID,'event_location_address',true);
 		wp_nonce_field( 'simple_event_nonce', 'simple_event_nonce' );
@@ -127,6 +128,7 @@ class Simple_Event {
                 <label for="event_date">Date</label><p class="description"></p>
             </div>
             <div class="input" style="float: left; width: 75%; vertical-align: top">
+            	<input type="hidden" id="event_date_time" name="event_date_time" value="<?=esc_attr($int_datetime)?>">
                 <input name="event_date" id="event_date" placeholder="" readonly autocomplete="off" value="<?=esc_attr($date)?>" class="large-text" type="text"><p class="description">Define the event date by selecting it from the jQuery DatePicker popup</p>
             </div>
         </div>
@@ -371,6 +373,7 @@ class Simple_Event {
 
         update_post_meta( $post_id, 'event_location_latitude_longitude', $event_post['event_location_latitude_longitude'] );
         update_post_meta( $post_id, 'event_location_address', $event_post['event_location_address'] );
+   		update_post_meta( $post_id, 'event_date_time', $event_post['event_date_time'] );
         update_post_meta( $post_id, 'event_date', $event_post['event_date'] );
         update_post_meta( $post_id, 'event_url', $event_post['event_url'] );
     }
@@ -384,6 +387,7 @@ class Simple_Event {
         if ( 'event' == $post->post_type ) {
             delete_post_meta( $post->ID, 'event_location_latitude_longitude');    
             delete_post_meta( $post->ID, 'event_location_address');  
+            delete_post_meta( $post->ID, 'event_date_time');
             delete_post_meta( $post->ID, 'event_date');       
             delete_post_meta( $post->ID, 'event_url');                  
         }
@@ -595,7 +599,13 @@ class Simple_Event {
 		<script type="text/javascript">
 		  ( function($) {
 		  	$(window).load(function() {
-				$( "#event_date" ).datepicker();
+				$( "#event_date" ).datepicker(
+					{
+						onSelect: function( dateText, inst) {							
+							$('#event_date_time').val($(this).datepicker('getDate').getTime());
+						}
+					}
+				);
 		  	});		    
 		  } )(jQuery);
 		</script>
