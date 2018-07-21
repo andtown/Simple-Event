@@ -45,6 +45,7 @@ class Simple_Event {
 	        'rewrite' => true,
 	        'supports' => array(
 	        	'title',
+	        	'editor',
 	            'thumbnail'
 	        ),
 	        'can_export' => true,
