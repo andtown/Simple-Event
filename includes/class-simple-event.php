@@ -223,6 +223,7 @@ class Simple_Event {
 		add_action('init', [$this, 'wp_init'] );
 		add_action('wp', [$this,'wp']);
 		add_action('admin_init', [$this, 'wp_admin_init']);
+		add_filter('request', [$this, 'request']);
 
 	}
 
@@ -288,6 +289,35 @@ class Simple_Event {
 
         add_action('save_post', array($this,'save_event')); 
         add_filter('pre_delete_post',array($this,'pre_delete_event'), 99, 3);	    
+	}
+
+	/**
+	 * 
+	 * 
+	 * @since 0.1.0
+	 */
+	public function request( $query_vars ) {
+
+		if ( !(isset($query_vars['post_type']) && 'event' == $query_vars['post_type']) ) return;
+
+		$query_vars = wp_parse_args($query_vars, [
+			'meta_key' => 'event_date_time',
+			'orderby' => 'meta_value',
+			'meta_type' => 'DATETIME',
+			'order' => 'ASC',
+			/*
+			'meta_query' => [
+				[
+					'key' => 'event_date_time',
+					'value' => date("Y-m-d"),
+					'compare' => '>='
+				]
+			],
+			*/
+			'paged' => 1
+		]);
+
+		return $query_vars;
 	}
 
 	/**
