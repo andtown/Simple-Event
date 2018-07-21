@@ -38,6 +38,8 @@
 
 			<?php endwhile; ?>
 
+			<?php Simple_Event::get_instance()->archive_pagination(); ?>
+			
 			<?php else: ?>
 
 				<!-- article -->
