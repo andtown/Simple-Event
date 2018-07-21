@@ -75,9 +75,9 @@
 			<p>
 				Event URL : <a href="<?=str_ireplace(['http:','https:'], '', get_post_meta(get_the_id(),'event_url',true))?>"><?=get_post_meta(get_the_id(),'event_url',true)?></a>
 			</p>
-			<!-- /event content -->
-
-			<!--
+			<p>
+				<?=Simple_Event::get_instance()->get_add_to_google_calendar_link()?>
+			</p>
 
 			<?php /*
 			<?php the_tags( __( 'Tags: ', 'simple-event' ), ', ', '<br>'); ?>

@@ -678,6 +678,23 @@ class Simple_Event {
 	    ));
     } 	
 
+    /**
+     *
+     *
+     * @return string|bool 
+     * @since 0.1.9
+     */
+    public function get_add_to_google_calendar_link() {
+		if ( !(is_post_type_archive('event') || is_post_type_hierarchical('event')) ) return false;
+		global $post;
+    	return sprintf('<a href="//www.google.com/calendar/event?action=TEMPLATE&text=%s&dates=%s&details=%s&location=%s&trp=false&sprop=&sprop=name:" target="_blank" rel="nofollow">Add to Google calendar</a>',
+    			urlencode(get_the_title()),
+    			date('Ymd\\THi00\\Z', strtotime(get_post_meta($post->ID,'event_date_time',true))).'/'.date('Ymd\\THi00\\Z', strtotime(get_post_meta($post->ID,'event_date_time',true))),
+    			urlencode(get_post_meta($post->ID,'event_url',true)),
+    			urlencode(get_post_meta($post->ID,'event_location_address',true))
+    		);
+    } 	
+
 	/**
 	 * 
 	 *
