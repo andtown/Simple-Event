@@ -168,8 +168,8 @@ class Simple_Event {
 			    <div id="map"></div>
 			    <div id="infowindow-content">
 			      <img src="" width="16" height="16" id="place-icon">
-			      <span id="place-name"  class="title"></span><br>
-			      <span id="place-address"></span>
+			      <span id="place-name"  class="title"><?=preg_replace('/^(.+?),.+/i','$1',$addr)?></span><br>
+			      <span id="place-address"><?=preg_replace('/^(.+?),(.+)$/i','$2',$addr)?></span>
 			    </div>
 			    <p class="description">This field is integrated with Google places autocomplete and also the map </p>
 			</div>
@@ -355,7 +355,9 @@ class Simple_Event {
 	 	if ( is_archive() && ($tmpl = SIMPLE_EVENT_PLUGIN_PATH . 'public/templates/archive.php') && file_exists($tmpl) ) { 
 	 		add_action( 'wp_enqueue_scripts', array($this, 'archive_template_scripts') );
 	 	} elseif ( is_single() && ($tmpl = SIMPLE_EVENT_PLUGIN_PATH . 'public/templates/single.php') && file_exists($tmpl) ) { 
-			add_action( 'wp_enqueue_scripts', array($this, 'single_template_scripts') );	 		
+			add_action( 'wp_enqueue_scripts', array($this, 'single_template_scripts') );
+			add_action( 'wp_print_scripts', array($this, 'admin_header_js') );	 	
+	    	add_action( 'wp_print_styles', array($this, 'google_location_style') );				
 	 	} 		
 
     	return $tmpl;
@@ -385,7 +387,10 @@ class Simple_Event {
 	 * @since 0.1.0
 	 */
     public function single_template_scripts() {
-			
+		wp_enqueue_script('google-maps-js', '//maps.googleapis.com/maps/api/js?key=AIzaSyDPv3PPTE1PHXMmPejCmiPSIAVCGaJqlIE&libraries=places&callback=initMap', [], null, true);
+		$loc = get_post_meta(get_the_id(),'event_location_latitude_longitude',true);
+		if ( empty($loc) ) $loc = '-7.7974565, 110.37069700000006';
+		wp_localize_script('google-maps-js','eventLocation',explode(',', $loc));		
     }
            
 	/**
@@ -551,16 +556,19 @@ class Simple_Event {
 	        });
 
 	        marker.setPosition({lat: parseFloat(eventLocation[0]), lng: parseFloat(eventLocation[1])});
+	        infowindow.open(map,marker);
 
 		    google.maps.event.addListener(marker, "position_changed", function() {
-		      document.getElementsByName('event_location_latitude_longitude')[0].value = marker.getPosition().lat().toString()+','+marker.getPosition().lng().toString();
+		    	if ( document.getElementsByName('event_location_latitude_longitude')[0] )
+		      		document.getElementsByName('event_location_latitude_longitude')[0].value = marker.getPosition().lat().toString()+','+marker.getPosition().lng().toString();
 		    });	        
 
 	        autocomplete.addListener('place_changed', function() {
 	          infowindow.close();
 	          marker.setVisible(false);
 	          var place = autocomplete.getPlace();
-	          document.getElementsByName('event_location_latitude_longitude')[0].value = place.geometry.location.lat().toString()+','+place.geometry.location.lng().toString();
+	          if ( document.getElementsByName('event_location_latitude_longitude')[0] )
+	          	document.getElementsByName('event_location_latitude_longitude')[0].value = place.geometry.location.lat().toString()+','+place.geometry.location.lng().toString();
 	          if (!place.geometry) {
 	            // User entered the name of a Place that was not suggested and
 	            // pressed the Enter key, or the Place Details request failed.
@@ -669,7 +677,7 @@ class Simple_Event {
 	        'total' => $wp_query->max_num_pages
 	    ));
     } 	
-    
+
 	/**
 	 * 
 	 *
