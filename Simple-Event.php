@@ -2,7 +2,7 @@
 /**
 * Plugin Name: Simple Event
 * Plugin URI: 
-* Version: 0.1.0
+* Version: 0.1.9
 * Author: Andtown
 * Author URI: 
 * Description: This plugin is a simple event plugin that uses custom post type to store events
