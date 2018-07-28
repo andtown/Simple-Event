@@ -299,7 +299,7 @@ class Simple_Event {
 	 */
 	public function request( $query_vars ) {
 
-		if ( !(isset($query_vars['post_type']) && 'event' == $query_vars['post_type']) ) return;
+		if ( !(isset($query_vars['post_type']) && 'event' == $query_vars['post_type']) ) return $query_vars;
 
 		$query_vars = wp_parse_args($query_vars, [
 			'meta_key' => 'event_date_time',
