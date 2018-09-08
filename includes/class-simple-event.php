@@ -46,7 +46,8 @@ class Simple_Event {
 	        'supports' => array(
 	        	'title',
 	        	'editor',
-	            'thumbnail'
+	            'thumbnail',
+	            'comments'
 	        ),
 	        'can_export' => true,
 	        'taxonomies' => array(
@@ -118,20 +119,30 @@ class Simple_Event {
 	public function events_meta_box_description_callback() {
 		global $post;
 		$cord = get_post_meta($post->ID,'event_location_latitude_longitude',true);
-		$int_datetime = strtotime(get_post_meta($post->ID,'event_date_time',true));
+		$int_datetime1 = strtotime(get_post_meta($post->ID,'event_date_time1',true));
+		$int_datetime2 = strtotime(get_post_meta($post->ID,'event_date_time2',true));		
 		$url = get_post_meta($post->ID,'event_url',true);
 		$addr = get_post_meta($post->ID,'event_location_address',true);
 		wp_nonce_field( 'simple_event_nonce', 'simple_event_nonce' );
 	?>
         <div class="field wrapper" style="margin-bottom: 12px; overflow: auto;">
             <div class="label" style="float: left; width: 25%; vertical-align: top">
-                <label for="event_date">Date</label><p class="description"></p>
+                <label for="event_date1">Start Date</label><p class="description"></p>
             </div>
             <div class="input" style="float: left; width: 75%; vertical-align: top">
-            	<input type="hidden" id="event_date_time" name="event_date_time" value="<?=esc_attr($int_datetime)?>">
-                <input id="event_date" placeholder="" readonly autocomplete="off" value="" class="large-text" type="text"><p class="description">Define the event date by selecting it from the jQuery DatePicker popup</p>
+            	<input type="hidden" id="event_date_time1" name="event_date_time1" value="<?=esc_attr($int_datetime1)?>">
+                <input id="event_date1" placeholder="" readonly autocomplete="off" value="" class="large-text" type="text"><p class="description">Define the event date by selecting it from the jQuery DateTimePicker popup</p>
             </div>
         </div>
+        <div class="field wrapper" style="margin-bottom: 12px; overflow: auto;">
+            <div class="label" style="float: left; width: 25%; vertical-align: top">
+                <label for="event_date2">End Date</label><p class="description"></p>
+            </div>
+            <div class="input" style="float: left; width: 75%; vertical-align: top">
+            	<input type="hidden" id="event_date_time2" name="event_date_time2" value="<?=esc_attr($int_datetime2)?>">            
+                <input id="event_date2" placeholder="" readonly autocomplete="off" value="" class="large-text" type="text"><p class="description">Define the event date by selecting it from the jQuery DateTimePicker popup</p>
+            </div>
+        </div>        
         <div class="field wrapper" style="margin-bottom: 12px; overflow: auto;">
             <div class="label" style="float: left; width: 25%; vertical-align: top">
                 <label for="event_location">Location</label><p class="description"></p>
@@ -258,7 +269,7 @@ class Simple_Event {
 
 		global $post;
 
-		if ( !($post instanceof WP_POST && 'event' == $post->post_type) ) return;
+		if ( !( ($post instanceof WP_POST && 'event' == $post->post_type) ) ) return;
 
 		add_action('template_include', array($this, 'template_include'));
 		
@@ -302,7 +313,7 @@ class Simple_Event {
 		if ( !(isset($query_vars['post_type']) && 'event' == $query_vars['post_type']) ) return $query_vars;
 
 		$query_vars = wp_parse_args($query_vars, [
-			'meta_key' => 'event_date_time',
+			'meta_key' => 'event_date_time1',
 			'orderby' => 'meta_value',
 			'meta_type' => 'DATETIME',
 			'order' => 'ASC',
@@ -328,9 +339,12 @@ class Simple_Event {
 	 */
 	public function admin_enqueue_scripts( $hook ) {
 		global $post;
-		wp_enqueue_script('jquery-ui-datepicker');
+		wp_enqueue_script('jquery-ui-datepicker');		
 		wp_enqueue_script('google-maps-js', '//maps.googleapis.com/maps/api/js?key=AIzaSyDPv3PPTE1PHXMmPejCmiPSIAVCGaJqlIE&libraries=places&callback=initMap', [], null, true);
+		wp_enqueue_script('jquery-ui-timepicker', '//cdnjs.cloudflare.com/ajax/libs/jquery-ui-timepicker-addon/1.6.3/jquery-ui-timepicker-addon.min.js', [], null, true);
+		wp_enqueue_script('jquery-ui-sliderAccess', '//cdnjs.cloudflare.com/ajax/libs/jquery-ui-timepicker-addon/1.6.3/jquery-ui-sliderAccess.js', [], null, true);
 		wp_enqueue_style('jquery-ui-css','//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css',[],null);
+		wp_enqueue_style('jquery-ui-timepicker','//cdnjs.cloudflare.com/ajax/libs/jquery-ui-timepicker-addon/1.6.3/jquery-ui-timepicker-addon.min.css',[],null);
 		$loc = get_post_meta($post->ID,'event_location_latitude_longitude',true);
 		if ( empty($loc) ) $loc = '-7.7974565, 110.37069700000006';
 		wp_localize_script('google-maps-js','eventLocation',explode(',', $loc));		
@@ -356,7 +370,7 @@ class Simple_Event {
 	 		add_action( 'wp_enqueue_scripts', array($this, 'archive_template_scripts') );
 	 	} elseif ( is_single() && ($tmpl = SIMPLE_EVENT_PLUGIN_PATH . 'public/templates/single.php') && file_exists($tmpl) ) { 
 			add_action( 'wp_enqueue_scripts', array($this, 'single_template_scripts') );
-			add_action( 'wp_print_scripts', array($this, 'admin_header_js') );	 	
+			add_action( 'wp_print_scripts', array($this, 'admin_header_js') );	
 	    	add_action( 'wp_print_styles', array($this, 'google_location_style') );				
 	 	} 		
 
@@ -408,7 +422,8 @@ class Simple_Event {
 
         update_post_meta( $post_id, 'event_location_latitude_longitude', $event_post['event_location_latitude_longitude'] );
         update_post_meta( $post_id, 'event_location_address', $event_post['event_location_address'] );
-   		update_post_meta( $post_id, 'event_date_time', date('Y-m-d', (int) $event_post['event_date_time'] ) );
+   		update_post_meta( $post_id, 'event_date_time1', date('Y-m-d h:i:s', (int) $event_post['event_date_time1'] ) );
+   		update_post_meta( $post_id, 'event_date_time2', date('Y-m-d h:i:s', (int) $event_post['event_date_time2'] ) );   		
         update_post_meta( $post_id, 'event_url', $event_post['event_url'] );
     }
 
@@ -422,6 +437,8 @@ class Simple_Event {
             delete_post_meta( $post->ID, 'event_location_latitude_longitude');    
             delete_post_meta( $post->ID, 'event_location_address');  
             delete_post_meta( $post->ID, 'event_date_time');
+            delete_post_meta( $post->ID, 'event_date_time1');  
+            delete_post_meta( $post->ID, 'event_date_time2');                      
             delete_post_meta( $post->ID, 'event_url');                  
         }
         return $chk; // go with deletion
@@ -649,13 +666,20 @@ class Simple_Event {
 		    };
 		    Date.prototype.getUnixTime = function() { return (this.getTime()/1000)+86400|0 };  	
 		  	$(window).load(function() {
-				$( "#event_date" ).datepicker(
+				$( "#event_date1" ).datetimepicker(
 					{	
-						onSelect: function( dateText, inst) {							
-							$('#event_date_time').val($(this).datepicker('getDate').getUnixTime());
+						onSelect: function( dateText, inst) {	
+							$('#event_date_time1').val($(this).datetimepicker('getDate').getUnixTime());
 						}
 					}
-				).datepicker( "setDate", new Date(parseInt($('#event_date_time').val())*1000) );
+				).datetimepicker( "setDate", new Date(parseInt($('#event_date_time1').val())*1000));
+				$( "#event_date2" ).datetimepicker(
+					{	
+						onSelect: function( dateText, inst) {	
+							$('#event_date_time2').val($(this).datetimepicker('getDate').getUnixTime());
+						}
+					}
+				).datetimepicker( "setDate", new Date(parseInt($('#event_date_time2').val())*1000));				
 		  	});		    
 		  } )(jQuery);
 		</script>
